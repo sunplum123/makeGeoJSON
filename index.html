@@ -2,50 +2,48 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>geojson制作</title>
-
+    <title>GeoJSON制作</title>
+    <style>
+        * {
+            margin: 0px;
+            padding: 0px;
+        }
+    </style>
 </head>
 <body>
-<div class=".container">
-    <div class="row">
+<div class="container-fluid">
+    <div class="row" style="padding-top: 5px;">
+        <div class="col-xs-2"></div>
+        <div class="col-xs-6">
+            <div class="input-group">
+                <div class="input-group-addon">
+                    <span class="glyphicon glyphicon-search"></span>
+                </div>
+                <input type="text" class="form-control" id="searchValue"
+                       placeholder="请输入行政区划名称..."/>
+                <span id="search" class="input-group-addon btn btn-info btn-sm" style="color:white;">搜索</span>
+                <span id="reset" onclick="clearGeoJSON()" class="input-group-addon btn btn-warning btn-sm" style="color:white;">清空</span>
+            </div>
 
-        <div class="col-xs-12">
-            <form class="form-inline" role="form">
-                <div class="form-group">
-                    <div class="input-group">
-                        <div class="input-group-addon">
-                            <span class="glyphicon glyphicon-search"></span>
-                        </div>
-                        <input type="text" class="form-control" id="searchValue"
-                               placeholder="请输入行政区划名称..."/>
-                        <div class="input-group-addon">
-                            <a href="#" id="search">加载地图</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="checkbox">
-                    <label>
-                        <input type="checkbox"> 是否结合子行政区划
-                    </label>
-                </div>
-            </form>
         </div>
-
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div id="show-repeat-search">
-
+        <div class="col-xs-4">
+            <div class="checkbox">
+                <label>
+                    <input id="getChildren" type="checkbox" value="">子区划
+                </label>
             </div>
         </div>
     </div>
     <div class="row">
-        <div class="col-md-12">
-            <div id="map" width="100%" height="100%"></div>
+        <div class="col-md-12" style="height:400px;">
+            <div id="map" style="width:100%;height:100%;"></div>
         </div>
     </div>
-    <div style="position: absolute;bottom:10px;right:10px;">
-        <button type="button" onclick="exportGeoJSON()" class="btn btn-success">导出geojson</button>
+    <div id="export" style="position: absolute;bottom:10px;right:10px;display:none;">
+        <button type="button" onclick="exportGeoJSON()" class="btn btn-success btn-xs">导出</button>
+    </div>
+    <div id="show-repeat-search" style="width:100%;position:absolute;top:50px;text-align: center;padding:2px 2px 9px 2px;">
+
     </div>
 </div>
 
@@ -64,7 +62,7 @@
 <script src="js/bootstrap.min.js"></script>
 <script src="js/ol.js"></script>
 <script src="index.js"></script>
-
+<script type="text/javascript" src="http://www.webmap.cn/public/js/maps/map/adminDataStore.js"></script>
 <!-- Insert this line after script imports -->
 <script>if (window.module) module = window.module;</script>
 </html>

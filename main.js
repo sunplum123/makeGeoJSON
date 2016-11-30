@@ -7,10 +7,50 @@ const {BrowserWindow} = electron;
 // 指向窗口对象的一个全局引用，如果没有这个引用，那么当该javascript对象被垃圾回收的
 // 时候该窗口将会自动关闭
 let win;
+var handleStartupEvent = function() {
+    if (process.platform !== 'win32') {
+        return false;
+    }
 
+    var squirrelCommand = process.argv[1];
+    switch (squirrelCommand) {
+        case '--squirrel-install':
+        case '--squirrel-updated':
+
+            // Optionally do things such as:
+            //
+            // - Install desktop and start menu shortcuts
+            // - Add your .exe to the PATH
+            // - Write to the registry for things like file associations and
+            //   explorer context menus
+
+            // Always quit when done
+            app.quit();
+
+            return true;
+        case '--squirrel-uninstall':
+            // Undo anything you did in the --squirrel-install and
+            // --squirrel-updated handlers
+
+            // Always quit when done
+            app.quit();
+
+            return true;
+        case '--squirrel-obsolete':
+            // This is called on the outgoing version of your app before
+            // we update to the new version - it's the opposite of
+            // --squirrel-updated
+            app.quit();
+            return true;
+    }
+};
+
+if (handleStartupEvent()) {
+    return;
+}
 function createWindow() {
   // 创建一个新的浏览器窗口
-  win = new BrowserWindow({width: 800, height: 600});
+  win = new BrowserWindow({width: 600, height: 530,autoHideMenuBar:true});
 
   // 并且装载应用的index.html页面
   win.loadURL(`file://${__dirname}/index.html`);
