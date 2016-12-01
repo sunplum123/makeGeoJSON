@@ -24,22 +24,6 @@ $(function () {
     initMap();
 })
 
-/**
- * 通过缓存查询
- */
-function searchAdminDataStore(searchValue,searchType) {
-    for (var i = 0; i < adminDataStore.length; i++) {
-        var proc = adminDataStore[i];
-        var areaCode = proc.pac;
-        var areaName = proc.name;
-        if (searchValue == areaCode || searchValue == areaName) {
-            if(searchType=="getchildren"){
-
-            }
-            break;
-        }
-    }
-}
 
 /**
  * 初始化地图
@@ -89,7 +73,7 @@ function searchAreaName(dataTemp) {
                     if ($("#getChildren").is(":checked")) {
                         searchAreaCode("id", result[i].id, "getchildren", getChildrenOfArea);
                     } else {
-                        makeGeojson(result[i].id, true);
+                        makeGeojson(result[i], true);
                     }
                 });
                 var span = $("<span>").attr("class", "glyphicon glyphicon-home");
@@ -113,7 +97,7 @@ function getChildrenOfArea(data) {
             if (i == (result.length - 1)) {
                 drawVector = true;
             }
-            makeGeojson(result[i].id, drawVector);
+            makeGeojson(result[i], drawVector);
         }
     } else {
         var button = $("<button>").attr("class", "btn btn-default btn-xs disabled")
@@ -162,14 +146,15 @@ function searchAreaCode(areaType, areaValue, searchType, callback) {
     req.end();
 }
 
-function makeGeojson(areaCode, drawVector) {
+function makeGeojson(area, drawVector) {
+    console.log(area);
     var http = require('http');
     var util = require('util');
     var querystring = require('querystring');
     var params = {
         method: "mapAreaSearch",
         type: 0,
-        key: areaCode
+        key: area.id
     };
     var options = {
         host: "www.webmap.cn",
@@ -178,55 +163,99 @@ function makeGeojson(areaCode, drawVector) {
         method: 'GET',
     };
     var req = http.request(options, function (res) {
-        var dataTemp = "";
-        res.on('data', function (chunk) {
-            dataTemp += chunk;
-        });
-        res.on('end', function () {
-            try {
-                var data = JSON.parse(dataTemp);
-                var itemList = data.itemList;
-                var item = itemList[0];
-                var geom = item.geom;
-                var pattern = new RegExp("MULTIPOLYGON\\({3}([\\w\\W]*)\\){3}");
-                var matcher = geom.match(pattern);
-                var pointStr = matcher[1];
-                var s1 = pointStr.split(/\)?\),\(?\(/g);
-                var multipolygon = [];
-                $.each(s1, function () {
-                    var polygon = [];
-                    var s2 = this.split(",");
-                    $.each(s2, function () {
-                        var point = [];
-                        var s3 = this.split(" ");
-                        point.push(Number(s3[0]));
-                        point.push(Number(s3[1]));
-                        polygon.push(point);
-                    })
-                    multipolygon.push(polygon);
-                });
-                geojson.features.push(getFeature(multipolygon, {
-                    areaCode: item.name,
-                    name: item.bname
-                }));
-                if (drawVector) {
-                    makeMap();
+        if (res.statusCode == 200) {
+            var dataTemp = "";
+            res.on('data', function (chunk) {
+                dataTemp += chunk;
+            });
+            res.on('end', function () {
+                try {
+                    var data = JSON.parse(dataTemp);
+                    var itemList = data.itemList;
+                    var item = itemList[0];
+                    var geom = item.geom;
+                    var pattern = new RegExp("MULTIPOLYGON\\({3}([\\w\\W]*)\\){3}");
+                    var matcher = geom.match(pattern);
+                    var pointStr = matcher[1];
+                    var s1 = pointStr.split(/\)?\),\(?\(/g);
+                    var multipolygon = [];
+                    $.each(s1, function () {
+                        var polygon = [];
+                        var s2 = this.split(",");
+                        $.each(s2, function () {
+                            var point = [];
+                            var s3 = this.split(" ");
+                            point.push(Number(s3[0]));
+                            point.push(Number(s3[1]));
+                            polygon.push(point);
+                        })
+                        multipolygon.push(polygon);
+                    });
+                    geojson.features.push(getFeature(multipolygon, {
+                        areaCode: item.name,
+                        name: item.bname
+                    }));
+                    if (drawVector) {
+                        makeMap();
+                    }
+                } catch (err) {
+                    console.log(dataTemp);
+                    console.log(err);
                 }
-            } catch (err) {
-                console.log(dataTemp);
-                console.log(err);
-            }
-        })
-        res.on('error', function (err) {
-            console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
-            util.log('请求结果错误： ' + err);
-        });
+            })
+            res.on('error', function (err) {
+                console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+                util.log('请求结果错误： ' + err);
+            });
+        } else {
+            var checkedArea = searchAdminDataStore(area, adminDataStore, 2);
+            makeGeojson(checkedArea, drawVector);
+        }
     });
     req.on('error', function (err) {
-        console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
         util.log('请求错误：' + err);
     });
     req.end();
+}
+/**
+ * 通过缓存校验
+ */
+function searchAdminDataStore(area, areas, index) {
+    var code = area.id;
+    var name = getName(area.fullname);
+    var cCode = getCode(code, index);
+    for (var i = 0; i < areas.length; i++) {
+        var proc = areas[i];
+        var areaCode = proc.pac;
+        var areaName = getName(proc.name);
+        if (areaName == name) {
+            var result = {
+                id: areaCode,
+                fullname: proc.name
+            };
+            return result;
+        } else {
+            if (areaCode == cCode) {
+                return searchAdminDataStore(area, proc.children, index + 2);
+            }
+        }
+    }
+}
+
+function getName(name) {
+    var cons = ["省", "市", "县", "区", "州"];
+    for (var i = 0; i < cons.length; i++) {
+        var name_fix = cons[i];
+        var index = name.indexOf(name_fix);
+        if (index != -1) {
+            return name.substring(0, index);
+        }
+    }
+}
+
+function getCode(code, index) {
+    code = code.substring(0, index) + '000000';
+    return code.substring(0, 6);
 }
 
 
@@ -235,6 +264,7 @@ function makeMap() {
         features: new ol.format.GeoJSON().readFeatures(geojson)
     });
     vectorLayer.setSource(source);
+    vectorLayer.changed();
     map.getView().fit(source.getExtent(), map.getSize());
     $("#export").show();
 }
