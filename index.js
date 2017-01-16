@@ -268,7 +268,7 @@ function makeMap() {
     $("#export").show();
 }
 
-function getFeature(cd, properites) {
+function getFeature(cd, properties) {
     var coordinates = cd;
     var type = "Polygon";
     if (cd.length > 1) {
