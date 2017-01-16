@@ -147,7 +147,6 @@ function searchAreaCode(areaType, areaValue, searchType, callback) {
 }
 
 function makeGeojson(area, drawVector) {
-    console.log(area);
     var http = require('http');
     var util = require('util');
     var querystring = require('querystring');
@@ -282,7 +281,7 @@ function getFeature(cd, properites) {
             type: type,
             coordinates: coordinates
         },
-        properites: properites
+        properties: properties
     };
 }
 
